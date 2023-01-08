@@ -315,7 +315,7 @@ def create_nerf(rank, args):
     else:
         ckpts = [os.path.join(args.basedir, args.expname, f)
                  for f in sorted(os.listdir(os.path.join(args.basedir, args.expname))) if f.endswith('.pth')]
-    def path2iter(path):
+    def path2iter(path):        # check point name -> start iteration
         tmp = os.path.basename(path)[:-4]
         idx = tmp.rfind('_')
         return int(tmp[idx + 1:])
@@ -365,7 +365,7 @@ def ddp_train_nerf(rank, args):
             f = os.path.join(args.basedir, args.expname, 'config.txt')
             with open(f, 'w') as file:
                 file.write(open(args.config, 'r').read())
-    torch.distributed.barrier()
+    torch.distributed.barrier()                                                 # Synchronizes all processes.
 
     ray_samplers = load_data_split(args.datadir, args.scene, split='train',
                                    try_load_min_depth=args.load_min_depth)
@@ -594,7 +594,7 @@ def train():
         args.world_size = torch.cuda.device_count()
         logger.info('Using # gpus: {}'.format(args.world_size))
     torch.multiprocessing.spawn(ddp_train_nerf,
-                                args=(args,),
+                                args=(args,),                   # args pass to fn
                                 nprocs=args.world_size,
                                 join=True)
 

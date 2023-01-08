@@ -8,7 +8,8 @@ from normalize_cam_dict import normalize_cam_dict
 #########################################################################
 
 def bash_run(cmd):
-    colmap_bin = '/home/zhangka2/code/colmap/build/__install__/bin/colmap'
+    # colmap_bin = '/home/zhangka2/code/colmap/build/__install__/bin/colmap'
+    colmap_bin = '/usr/local/bin/colmap'
     cmd = colmap_bin + ' ' + cmd
     print('\nRunning cmd: ', cmd)
 
@@ -36,6 +37,14 @@ def run_sift_matching(img_dir, db_file, remove_exist=False):
                                     --SiftExtraction.use_gpu 1 \
                                     --SiftExtraction.max_num_features 16384 \
                                     --SiftExtraction.gpu_index {}'.format(db_file, img_dir, gpu_index)
+    # cmd = ' feature_extractor --database_path {} \
+    #                                 --image_path {} \
+    #                                 --ImageReader.single_camera 1 \
+    #                                 --ImageReader.camera_model SIMPLE_RADIAL \
+    #                                 --SiftExtraction.max_image_size 5000  \
+    #                                 --SiftExtraction.estimate_affine_shape 0 \
+    #                                 --SiftExtraction.domain_size_pooling 1 \
+    #                                 --SiftExtraction.max_num_features 16384'.format(db_file, img_dir, gpu_index)
     bash_run(cmd)
 
     # feature matching
@@ -64,13 +73,14 @@ def run_sfm(img_dir, db_file, out_dir):
 
 def prepare_mvs(img_dir, sparse_dir, mvs_dir):
     print('Preparing for MVS...')
+    sparse_dir_0 = os.path.join(sparse_dir, '0')
 
     cmd = ' image_undistorter \
             --image_path {} \
             --input_path {} \
             --output_path {} \
             --output_type COLMAP \
-            --max_image_size 2000'.format(img_dir, sparse_dir, mvs_dir)
+            --max_image_size 2000'.format(img_dir, sparse_dir_0, mvs_dir)
 
     bash_run(cmd)
 
@@ -161,8 +171,8 @@ def main(img_dir, out_dir, run_mvs=False):
 if __name__ == '__main__':
     ### note: this script is intended for the case where all images are taken by the same camera, i.e., intrinisics are shared.
     
-    img_dir = ''
-    out_dir = ''
+    img_dir = '/home/yu/workspace/data/v4rl/lab_1/images'
+    out_dir = '/home/yu/workspace/data/v4rl/lab_1/outputs_full'
     run_mvs = False
     main(img_dir, out_dir, run_mvs=run_mvs)
 

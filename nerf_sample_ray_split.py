@@ -31,7 +31,7 @@ def get_rays_single_image(H, W, intrinsics, c2w):
     depth = np.linalg.inv(c2w)[2, 3]
     depth = depth * np.ones((rays_o.shape[0],), dtype=np.float32)  # (H*W,)
 
-    return rays_o, rays_d, depth
+    return rays_o, rays_d, depth   
 
 
 class RaySamplerSingleImage(object):
@@ -100,8 +100,8 @@ class RaySamplerSingleImage(object):
             min_depth = 1e-4 * np.ones_like(self.rays_d[..., 0])
 
         ret = OrderedDict([
-            ('ray_o', self.rays_o),
-            ('ray_d', self.rays_d),
+            ('ray_o', self.rays_o),     # ray origin
+            ('ray_d', self.rays_d),     # ray direction
             ('depth', self.depth),
             ('rgb', self.img),
             ('mask', self.mask),
