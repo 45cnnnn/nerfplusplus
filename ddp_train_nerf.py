@@ -402,7 +402,8 @@ def ddp_train_nerf(rank, args):
         scalars_to_log['resolution'] = ray_samplers[0].resolution_level
         # randomly sample rays and move to device
         i = np.random.randint(low=0, high=len(ray_samplers))
-        ray_batch = ray_samplers[i].random_sample(args.N_rand, center_crop=False)
+        # ray_batch = ray_samplers[i].random_sample(args.N_rand, center_crop=False)
+        ray_batch = ray_samplers[i].random_sample(args.N_rand, center_crop=False, gradient_based=True)
         for key in ray_batch:
             if torch.is_tensor(ray_batch[key]):
                 ray_batch[key] = ray_batch[key].to(rank)

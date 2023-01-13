@@ -4,6 +4,9 @@ import torch
 import cv2
 import imageio
 
+from scipy import ndimage
+from skimage import color
+
 ########################################################################################################################
 # ray batch sampling
 ########################################################################################################################
@@ -113,7 +116,7 @@ class RaySamplerSingleImage(object):
                 ret[k] = torch.from_numpy(ret[k])
         return ret
 
-    def random_sample(self, N_rand, center_crop=False):
+    def random_sample(self, N_rand, center_crop=False, gradient_based=False):
         '''
         :param N_rand: number of rays to be casted
         :return:
@@ -134,6 +137,20 @@ class RaySamplerSingleImage(object):
 
             # Convert back to original image
             select_inds = v[select_inds] * self.W + u[select_inds]
+        elif gradient_based:
+            if self.img is not None:
+                img = self.get_img()
+                gray_img = color.rgb2gray(img*255)
+                result = ndimage.gaussian_laplace(gray_img, sigma=3)
+                min_ = min(result[result > 0])
+                result[result <= 0] = min_
+                result_ = result.flatten()
+                result_ = result_ / sum(result_)
+
+                select_inds = np.random.choice(self.H*self.W, size=(N_rand,), replace=False, p=result_)
+
+            else:
+                select_inds = np.random.choice(self.H*self.W, size=(N_rand,), replace=False)
         else:
             # Random from one image
             select_inds = np.random.choice(self.H*self.W, size=(N_rand,), replace=False)
@@ -167,8 +184,70 @@ class RaySamplerSingleImage(object):
             ('img_name', self.img_path)
         ])
         # return torch tensors
-        for k in ret:
-            if isinstance(ret[k], np.ndarray):
-                ret[k] = torch.from_numpy(ret[k])
+        # for k in ret:
+        #     if isinstance(ret[k], np.ndarray):
+        #         ret[k] = torch.from_numpy(ret[k])
 
-        return ret
+        return ret, select_inds
+    
+    # def random_sample_(self, N_rand, center_crop=False, gradient_based=False):
+    #     '''
+    #     :param N_rand: number of rays to be casted
+    #     :return:
+    #     '''
+    #     if center_crop:
+    #         half_H = self.H // 2
+    #         half_W = self.W // 2
+    #         quad_H = half_H // 2
+    #         quad_W = half_W // 2
+
+    #         # pixel coordinates
+    #         u, v = np.meshgrid(np.arange(half_W-quad_W, half_W+quad_W),
+    #                            np.arange(half_H-quad_H, half_H+quad_H))
+    #         u = u.reshape(-1)
+    #         v = v.reshape(-1)
+
+    #         select_inds = np.random.choice(u.shape[0], size=(N_rand,), replace=False)
+
+    #         # Convert back to original image
+    #         select_inds = v[select_inds] * self.W + u[select_inds]
+    #     elif gradient_based:
+    #         select_inds = np.random.choice(self.H*self.W, size=(N_rand,), replace=False)
+    #     else:
+    #         # Random from one image
+    #         select_inds = np.random.choice(self.H*self.W, size=(N_rand,), replace=False)
+
+    #     rays_o = self.rays_o[select_inds, :]    # [N_rand, 3]
+    #     rays_d = self.rays_d[select_inds, :]    # [N_rand, 3]
+    #     depth = self.depth[select_inds]         # [N_rand, ]
+
+    #     if self.img is not None:
+    #         rgb = self.img[select_inds, :]          # [N_rand, 3]
+    #     else:
+    #         rgb = None
+
+    #     if self.mask is not None:
+    #         mask = self.mask[select_inds]
+    #     else:
+    #         mask = None
+
+    #     if self.min_depth is not None:
+    #         min_depth = self.min_depth[select_inds]
+    #     else:
+    #         min_depth = 1e-4 * np.ones_like(rays_d[..., 0])
+
+    #     ret = OrderedDict([
+    #         ('ray_o', rays_o),
+    #         ('ray_d', rays_d),
+    #         ('depth', depth),
+    #         ('rgb', rgb),
+    #         ('mask', mask),
+    #         ('min_depth', min_depth),
+    #         ('img_name', self.img_path)
+    #     ])
+    #     # return torch tensors
+    #     for k in ret:
+    #         if isinstance(ret[k], np.ndarray):
+    #             ret[k] = torch.from_numpy(ret[k])
+
+    #     return ret
