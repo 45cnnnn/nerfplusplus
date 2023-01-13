@@ -184,9 +184,9 @@ class RaySamplerSingleImage(object):
             ('img_name', self.img_path)
         ])
         # return torch tensors
-        # for k in ret:
-        #     if isinstance(ret[k], np.ndarray):
-        #         ret[k] = torch.from_numpy(ret[k])
+        for k in ret:
+            if isinstance(ret[k], np.ndarray):
+                ret[k] = torch.from_numpy(ret[k])
 
         return ret, select_inds
     
