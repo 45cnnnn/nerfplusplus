@@ -188,7 +188,7 @@ class RaySamplerSingleImage(object):
             if isinstance(ret[k], np.ndarray):
                 ret[k] = torch.from_numpy(ret[k])
 
-        return ret, select_inds
+        return ret
     
     # def random_sample_(self, N_rand, center_crop=False, gradient_based=False):
     #     '''
